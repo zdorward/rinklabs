@@ -1,7 +1,7 @@
 // apps/web/src/components/SubscriptionGate.tsx
 'use client'
 
-import { useUser } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import Link from 'next/link'
@@ -11,13 +11,15 @@ interface SubscriptionGateProps {
 }
 
 export function SubscriptionGate({ children }: SubscriptionGateProps) {
-  const { isSignedIn, user } = useUser()
+  const { isSignedIn } = useUser()
+  const { getToken } = useAuth()
 
   const { data: userInfo, isLoading } = useQuery({
     queryKey: ['me'],
     queryFn: async () => {
-      // Get token from Clerk - simplified for MVP
-      return api.getMe('')
+      const token = await getToken()
+      if (!token) throw new Error('No token')
+      return api.getMe(token)
     },
     enabled: isSignedIn,
   })

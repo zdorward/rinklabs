@@ -1,7 +1,7 @@
 // apps/web/src/app/account/page.tsx
 'use client'
 
-import { useUser } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
@@ -9,14 +9,16 @@ import { Suspense } from 'react'
 
 function AccountContent() {
   const { isSignedIn, isLoaded } = useUser()
+  const { getToken } = useAuth()
   const searchParams = useSearchParams()
   const upgraded = searchParams.get('upgraded') === 'true'
 
   const { data: userInfo, isLoading } = useQuery({
     queryKey: ['me'],
     queryFn: async () => {
-      // Get token from Clerk - simplified for MVP
-      return api.getMe('')
+      const token = await getToken()
+      if (!token) throw new Error('No token')
+      return api.getMe(token)
     },
     enabled: isSignedIn,
   })
