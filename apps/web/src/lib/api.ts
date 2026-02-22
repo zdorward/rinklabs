@@ -58,6 +58,36 @@ export interface UserInfo {
   stripe_customer_id: string | null
 }
 
+export interface BookOdds {
+  bookmaker: string
+  home_price: number
+  away_price: number
+  home_vig_free_prob: number
+  away_vig_free_prob: number
+  home_edge_ev: number
+  away_edge_ev: number
+  last_updated: string
+}
+
+export interface GameDetail {
+  id: string
+  home_team: string
+  away_team: string
+  commence_time: string
+  consensus: {
+    home_prob: number
+    away_prob: number
+  }
+  odds_by_book: BookOdds[]
+  movement: {
+    home_open: number | null
+    home_current: number
+    change_from_open: number | null
+    change_24h: number | null
+  }
+  disagreement: number
+}
+
 async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit & { token?: string }
@@ -87,7 +117,7 @@ export const api = {
     fetchApi<{ games: GameSummary[] }>(`/games?date=${date}`),
 
   getGame: (gameId: string) =>
-    fetchApi<GameSummary>(`/games/${gameId}`),
+    fetchApi<GameDetail>(`/games/${gameId}`),
 
   getTopEdges: (limit?: number) =>
     fetchApi<TopEdgesResponse>(`/markets/today/top-edges${limit ? `?limit=${limit}` : ''}`),
