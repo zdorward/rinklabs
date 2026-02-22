@@ -1,5 +1,6 @@
 # apps/api/src/scheduler/jobs.py
 import logging
+from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -36,15 +37,17 @@ async def scheduled_ingest():
 
 def setup_scheduler():
     """Called on app startup."""
+    # Run immediately on startup, then every 10 minutes
     scheduler.add_job(
         scheduled_ingest,
         trigger=IntervalTrigger(minutes=10),
         id="odds_ingestion",
         replace_existing=True,
         max_instances=1,
+        next_run_time=datetime.now(),  # Run immediately on startup
     )
     scheduler.start()
-    logger.info("Scheduler started - ingesting every 10 minutes")
+    logger.info("Scheduler started - running immediate ingestion, then every 10 minutes")
 
 
 def shutdown_scheduler():
