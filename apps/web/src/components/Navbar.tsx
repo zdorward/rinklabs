@@ -1,12 +1,13 @@
 // apps/web/src/components/Navbar.tsx
-'use client'
-
 import Link from 'next/link'
-import { UserButton, useUser } from '@clerk/nextjs'
+import {
+  SignInButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from '@clerk/nextjs'
 
 export function Navbar() {
-  const { isSignedIn } = useUser()
-
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4">
@@ -31,24 +32,22 @@ export function Navbar() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            {isSignedIn ? (
-              <>
-                <Link
-                  href="/account"
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  Account
-                </Link>
-                <UserButton afterSignOutUrl="/" />
-              </>
-            ) : (
+            <SignedOut>
+              <SignInButton>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                  Sign In
+                </button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
               <Link
-                href="/sign-in"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                href="/account"
+                className="text-gray-600 hover:text-gray-900"
               >
-                Sign In
+                Account
               </Link>
-            )}
+              <UserButton />
+            </SignedIn>
           </div>
         </div>
       </div>
