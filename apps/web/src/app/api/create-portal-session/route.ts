@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2023-10-16',
 })
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
