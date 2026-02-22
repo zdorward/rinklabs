@@ -15,6 +15,9 @@ from src.schemas import (
     ConsensusInfo,
     BookOdds,
     MovementInfo,
+    OddsHistoryResponse,
+    OddsSnapshot as OddsSnapshotSchema,
+    SnapshotBook,
 )
 from src.services import (
     american_to_implied_prob,
@@ -235,3 +238,65 @@ async def get_game(game_id: UUID, db: Session = Depends(get_db)):
         ),
         disagreement=metrics["disagreement"],
     )
+
+
+@router.get("/games/{game_id}/odds", response_model=OddsHistoryResponse)
+async def get_game_odds_history(game_id: UUID, db: Session = Depends(get_db)):
+    """Get historical odds snapshots for a game."""
+    from sqlalchemy import func
+
+    game = db.query(Game).filter(Game.id == game_id).first()
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    # Get all snapshots grouped by time, calculate consensus at each point
+    snapshot_times = (
+        db.query(OddsSnapshot.snapshot_time)
+        .filter(OddsSnapshot.game_id == game_id)
+        .distinct()
+        .order_by(OddsSnapshot.snapshot_time)
+        .all()
+    )
+
+    snapshots = []
+    for (snap_time,) in snapshot_times:
+        # Get all book odds at this timestamp
+        time_snapshots = (
+            db.query(OddsSnapshot)
+            .filter(
+                OddsSnapshot.game_id == game_id,
+                OddsSnapshot.snapshot_time == snap_time,
+            )
+            .all()
+        )
+
+        if not time_snapshots:
+            continue
+
+        # Calculate consensus at this point in time
+        home_probs = []
+        books = []
+        for snap in time_snapshots:
+            home_implied = american_to_implied_prob(snap.home_price)
+            away_implied = american_to_implied_prob(snap.away_price)
+            home_fair, _ = remove_vig(home_implied, away_implied)
+            home_probs.append(home_fair)
+            books.append(
+                SnapshotBook(
+                    bookmaker=snap.bookmaker,
+                    home_price=snap.home_price,
+                    away_price=snap.away_price,
+                )
+            )
+
+        consensus_home = calculate_consensus(home_probs)
+
+        snapshots.append(
+            OddsSnapshotSchema(
+                timestamp=snap_time,
+                books=books,
+                consensus_home_prob=consensus_home,
+            )
+        )
+
+    return OddsHistoryResponse(game_id=game_id, snapshots=snapshots)

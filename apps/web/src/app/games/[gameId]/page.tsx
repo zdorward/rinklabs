@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { api } from '@/lib/api'
 import { formatDateTime, formatProbability } from '@/lib/utils'
 import { OddsTable } from '@/components/OddsTable'
+import { MovementSparkline } from '@/components/MovementSparkline'
 
 export default function GamePage() {
   const params = useParams()
@@ -104,6 +105,11 @@ export default function GamePage() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">Line Movement Chart</h2>
+        <MovementSparkline gameId={gameId} homeTeam={game.home_team} />
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border p-6">

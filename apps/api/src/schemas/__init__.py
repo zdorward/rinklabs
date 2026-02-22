@@ -11,6 +11,7 @@ from src.schemas.game import (
 from src.schemas.odds import (
     OddsSnapshot,
     OddsHistoryResponse,
+    SnapshotBook,
     EdgeOpportunity,
     TopEdgesResponse,
     DisagreementInfo,
@@ -27,6 +28,7 @@ __all__ = [
     "MovementInfo",
     "OddsSnapshot",
     "OddsHistoryResponse",
+    "SnapshotBook",
     "EdgeOpportunity",
     "TopEdgesResponse",
     "DisagreementInfo",

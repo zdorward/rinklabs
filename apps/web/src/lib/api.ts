@@ -88,6 +88,21 @@ export interface GameDetail {
   disagreement: number
 }
 
+export interface OddsSnapshot {
+  timestamp: string
+  consensus_home_prob: number
+  books: {
+    bookmaker: string
+    home_price: number
+    away_price: number
+  }[]
+}
+
+export interface OddsHistoryResponse {
+  game_id: string
+  snapshots: OddsSnapshot[]
+}
+
 async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit & { token?: string }
@@ -118,6 +133,9 @@ export const api = {
 
   getGame: (gameId: string) =>
     fetchApi<GameDetail>(`/games/${gameId}`),
+
+  getGameOddsHistory: (gameId: string) =>
+    fetchApi<OddsHistoryResponse>(`/games/${gameId}/odds`),
 
   getTopEdges: (limit?: number) =>
     fetchApi<TopEdgesResponse>(`/markets/today/top-edges${limit ? `?limit=${limit}` : ''}`),
