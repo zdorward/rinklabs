@@ -17,6 +17,7 @@ dependencies = [
     "httpx>=0.26.0",
     "apscheduler>=3.10.4",
     "stripe>=7.10.0",
+    "pyjwt[crypto]>=2.8.0",
 ]
 
 [project.optional-dependencies]

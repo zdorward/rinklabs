@@ -2,6 +2,7 @@
 from fastapi import Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
+import jwt
 import httpx
 
 from src.config import get_settings
@@ -10,28 +11,66 @@ from src.models import User
 
 settings = get_settings()
 
+# Cache for JWKS
+_jwks_cache: dict = {}
+
+
+async def get_clerk_jwks(issuer: str) -> dict:
+    """Fetch Clerk's JWKS for token verification."""
+    if issuer in _jwks_cache:
+        return _jwks_cache[issuer]
+
+    jwks_url = f"{issuer}/.well-known/jwks.json"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(jwks_url)
+        if response.status_code == 200:
+            _jwks_cache[issuer] = response.json()
+            return _jwks_cache[issuer]
+    return {}
+
 
 async def verify_clerk_token(token: str) -> dict | None:
-    """Verify Clerk JWT and return session claims."""
-    if not settings.clerk_secret_key:
-        return None
-
-    # For production, use Clerk's official SDK
-    # This is a simplified version for MVP
+    """Verify Clerk JWT and return claims."""
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                "https://api.clerk.com/v1/sessions/verify",
-                headers={
-                    "Authorization": f"Bearer {settings.clerk_secret_key}",
-                },
-                params={"token": token},
-            )
-            if response.status_code == 200:
-                return response.json()
+        # Decode header to get key ID and issuer
+        unverified = jwt.decode(token, options={"verify_signature": False})
+        issuer = unverified.get("iss")
+
+        if not issuer:
+            return None
+
+        # Get JWKS from Clerk
+        jwks = await get_clerk_jwks(issuer)
+        if not jwks:
+            return None
+
+        # Get the signing key
+        header = jwt.get_unverified_header(token)
+        kid = header.get("kid")
+
+        key = None
+        for k in jwks.get("keys", []):
+            if k.get("kid") == kid:
+                key = jwt.algorithms.RSAAlgorithm.from_jwk(k)
+                break
+
+        if not key:
+            return None
+
+        # Verify and decode the token
+        claims = jwt.decode(
+            token,
+            key,
+            algorithms=["RS256"],
+            options={"verify_aud": False}  # Clerk doesn't always set audience
+        )
+        return claims
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
     except Exception:
-        pass
-    return None
+        return None
 
 
 def get_or_create_user(db: Session, clerk_id: str, email: str | None = None) -> User:
