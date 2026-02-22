@@ -55,6 +55,7 @@ export interface UserInfo {
   email: string | null
   subscription_status: string
   current_period_end: string | null
+  stripe_customer_id: string | null
 }
 
 async function fetchApi<T>(
