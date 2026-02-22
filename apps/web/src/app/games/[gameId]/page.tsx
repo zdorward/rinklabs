@@ -2,17 +2,15 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import { formatDateTime, formatProbability } from '@/lib/utils'
 import { OddsTable } from '@/components/OddsTable'
 
-interface GamePageProps {
-  params: Promise<{ gameId: string }>
-}
-
-export default function GamePage({ params }: GamePageProps) {
-  const { gameId } = use(params)
+export default function GamePage() {
+  const params = useParams()
+  const gameId = params.gameId as string
 
   const { data: game, isLoading, error } = useQuery({
     queryKey: ['game', gameId],
@@ -119,6 +117,3 @@ export default function GamePage({ params }: GamePageProps) {
     </div>
   )
 }
-
-// React 19 use() for unwrapping promises
-import { use } from 'react'
