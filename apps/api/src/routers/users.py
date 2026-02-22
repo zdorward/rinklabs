@@ -17,6 +17,7 @@ class UserResponse(BaseModel):
     email: str | None
     subscription_status: str
     current_period_end: datetime | None
+    stripe_customer_id: str | None
 
 
 class ProMarketsResponse(BaseModel):
@@ -31,6 +32,7 @@ async def get_me(user: User = Depends(require_user)):
         email=user.email,
         subscription_status=user.subscription_status,
         current_period_end=user.current_period_end,
+        stripe_customer_id=user.stripe_customer_id,
     )
 
 
