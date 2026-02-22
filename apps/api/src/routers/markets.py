@@ -26,9 +26,9 @@ FREE_LIMIT = 3
 
 
 def _get_today_games(db: Session) -> list[Game]:
-    """Get games for today and next 3 days."""
+    """Get games for the next 7 days."""
     now = datetime.now(timezone.utc)
-    end = now + timedelta(days=4)
+    end = now + timedelta(days=7)
     return (
         db.query(Game)
         .filter(Game.commence_time >= now, Game.commence_time < end)
